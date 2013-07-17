@@ -990,7 +990,7 @@ describe "Operator assignment 'obj[idx] op= expr'" do
 
     def []=(first_arg, second_arg=nil)
       if second_arg
-        index = fist_arg
+        index = first_arg
         value = second_arg
       else
         index = 0
