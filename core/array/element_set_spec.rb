@@ -65,10 +65,14 @@ describe "Array#[]=" do
       a.should == ["a", nil, "e"]
     end
   end
-  it "returns nil if the rhs is nil" do
+  it "returns nil if the last argument is nil" do
     a = [1, 2, 3]
-    (a[1, 3] = nil).should == nil
-    (a[1..3] = nil).should == nil
+    # Note: This test should *not* test the return value of `(a[x, y] = nil)`
+    # as that expression *always* returns the value of the rhs, regardless
+    # of the return value of `Array#[]=` and is therefore not a specification
+    # of the Array class. (See language/variables_spec.rb)
+    a.[]=(1, 3, nil).should == nil
+    a.[]=(1..3, nil).should == nil
   end
 
   it "sets the section defined by range to other" do
@@ -292,17 +296,17 @@ end
 describe "Array#[]= with [index]" do
   it "returns value assigned if idx is inside array" do
     a = [1, 2, 3, 4, 5]
-    (a[3] = 6).should == 6
+    a.[]=(3, 6).should == 6
   end
 
   it "returns value assigned if idx is right beyond right array boundary" do
     a = [1, 2, 3, 4, 5]
-    (a[5] = 6).should == 6
+    a.[]=(5, 6).should == 6
   end
 
   it "returns value assigned if idx far beyond right array boundary" do
     a = [1, 2, 3, 4, 5]
-    (a[10] = 6).should == 6
+    a.[]=(10, 6).should == 6
   end
 
   it "sets the value of the element at index" do
@@ -324,12 +328,12 @@ end
 describe "Array#[]= with [index, count]" do
   it "returns non-array value if non-array value assigned" do
     a = [1, 2, 3, 4, 5]
-    (a[2, 3] = 10).should == 10
+    a.[]=(2, 3, 10).should == 10
   end
 
   it "returns array if array assigned" do
     a = [1, 2, 3, 4, 5]
-    (a[2, 3] = [4, 5]).should == [4, 5]
+    a.[]=(2, 3, [4, 5]).should == [4, 5]
   end
 
   ruby_version_is '' ... '1.9' do
@@ -416,12 +420,12 @@ end
 describe "Array#[]= with [m..n]" do
   it "returns non-array value if non-array value assigned" do
     a = [1, 2, 3, 4, 5]
-    (a[2..4] = 10).should == 10
+    a.[]=(2..4, 10).should == 10
   end
 
   it "returns array if array assigned" do
     a = [1, 2, 3, 4, 5]
-    (a[2..4] = [7, 8]).should == [7, 8]
+    a.[]=(2..4, [7, 8]).should == [7, 8]
   end
 
   ruby_version_is '' ... '1.9' do
