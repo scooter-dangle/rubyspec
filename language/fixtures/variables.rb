@@ -53,6 +53,30 @@ module VariablesSpecs
     end
   end
 
+  # The only reason to use this rather than an explict mock is that this way
+  # the order of the method calls can be guaranteed.
+  class ArgsRecorder
+    attr_reader :record
+    # basic, dumb, constant return values so that
+    # there's no hiding nil or error
+    attr_accessor :getter_return, :setter_return
+
+    def initialize
+      @getter_return, @setter_return = 1, 2
+      @record = []
+    end
+
+    def [] *args
+      @record.push [:[], args]
+      @getter_return
+    end
+
+    def []= *args
+      @record.push [:[]=, args]
+      @setter_return
+    end
+  end
+
   class ArraySubclass < Array
   end
 end

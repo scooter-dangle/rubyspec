@@ -982,83 +982,83 @@ describe "Conditional operator assignment 'obj[idx] op= expr'" do
   end
 end
 
-describe "Operator assignment 'obj[idx] op= expr'" do
-  class ArrayWithDefaultIndex < Array
-    def [](index=nil)
-      super(index || 0)
+describe "Operator assignment 'obj[arg] op= expr'" do
+  describe "expands to obj[arg] = obj[arg] op exp" do
+    #   obj[arg] += expr
+    # should expand to
+    #   lambda do
+    #     rhs = obj.[](arg) + expr
+    #     obj.[]= arg, rhs
+    #     rhs
+    #   end.call
+    # What needs to be tested? That `:[]` was called on obj with arguments
+    # `arg` and that `:[]=` was then called on obj with arguments
+    # `arg, rhs` (where `rhs` is the value returned from `:[]` plus `expr`)
+    # and that the final return value of the expression is `rhs`. Testing the
+    # actual value of `rhs` is for the `:[]` spec of the class of obj and for
+    # the `:+` spec of the class of the value returned by the call to
+    # `:[]`.
+
+    before :all do
+      @obj = VariablesSpecs::ArgsRecorder.new
+      # TODO - Make @obj.getter_return a mock so that it can be used
+      # to test all the possible op= cases
+      @expr = 5
+      @result = @obj.getter_return + @expr
     end
 
-    def []=(first_arg, second_arg=nil)
-      if second_arg
-        index = first_arg
-        value = second_arg
-      else
-        index = 0
-        value = first_arg
+    before :each do
+      @args = []
+      @obj.record.clear
+    end
+
+    after :each do
+      @obj.record.should == [
+        [:[], @args],
+        [:[]=, @args + [@result]]
+      ]
+    end
+
+    it "works with one argument" do
+      @args = [1]
+      (@obj[1] += @expr).should == @result
+    end
+
+    it "allows empty arguments inside square brackets" do
+      @args = []
+      (@obj[] += @expr).should == @result
+    end
+
+    it "handles multiple argument inside square brackets" do
+      @args = [0, 2]
+      (@obj[0, 2] += @expr).should == @result
+    end
+
+    # TODO - Make the op (currently just testing '+') a parameter or
+    # variable to test all the rest of the op= operator cases
+
+    context "splat arguments" do
+      it "handles empty splats" do
+        @args = []
+        (@obj[*@args] += @expr).should == @result
       end
 
-      super(index, value)
+      it "handles single-element splats" do
+        @args = [0]
+        (@obj[*@args] += @expr).should == @result
+      end
+
+      it "handles multi-element splats" do
+        @args = [0,2]
+        (@obj[*@args] += @expr).should == @result
+      end
+
+      it "handles non-splat arguments in same method call" do
+        @args = [2]
+        (@obj[0, *@args] += @expr).should == @result
+        @args = [0] + @args
+      end
     end
-  end
-
-  it "handles empty index (idx) arguments" do
-    array = ArrayWithDefaultIndex.new
-    array << 1
-    (array[] += 5).should == 6
-  end
-
-  it "handles complex index (idx) arguments" do
-    x = [1,2,3,4]
-    (x[0,2] += [5]).should == [1,2,5]
-    x.should == [1,2,5,3,4]
-    (x[0,2] += [3,4]).should == [1,2,3,4]
-    x.should == [1,2,3,4,5,3,4]
-
-    (x[2..3] += [8]).should == [3,4,8]
-    x.should == [1,2,3,4,8,5,3,4]
-
-    y = VariablesSpecs::OpAsgn.new
-    y.a = 1
-    (x[y.do_side_effect] *= 2).should == 4
-    x.should == [1,4,3,4,8,5,3,4]
-
-    h = {'key1' => 23, 'key2' => 'val'}
-    (h['key1'] %= 5).should == 3
-    (h['key2'] += 'ue').should == 'value'
-    h.should == {'key1' => 3, 'key2' => 'value'}
-  end
-
-  it "handles empty splat index (idx) arguments" do
-    array = ArrayWithDefaultIndex.new
-    array << 5
-    splat_index = []
-
-    (array[*splat_index] += 5).should == 10
-    array.should== [10]
-  end
-
-  it "handles single splat index (idx) arguments" do
-    array = [1,2,3,4]
-    splat_index = [0]
-
-    (array[*splat_index] += 5).should == 6
-    array.should == [6,2,3,4]
-  end
-
-  it "handles multiple splat index (idx) arguments" do
-    array = [1,2,3,4]
-    splat_index = [0,2]
-
-    (array[*splat_index] += [5]).should == [1,2,5]
-    array.should == [1,2,5,3,4]
-  end
-
-  it "handles splat index (idx) arguments with normal arguments" do
-    array = [1,2,3,4]
-    splat_index = [2]
-
-    (array[0, *splat_index] += [5]).should == [1,2,5]
-    array.should == [1,2,5,3,4]
   end
 
   # This example fails on 1.9 because of bug #2050
