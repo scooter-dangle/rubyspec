@@ -16,7 +16,7 @@ process_is_foreground do
       end
 
       it "returns the new value for the passed index" do
-        (Readline::HISTORY[1] = "second test").should == "second test"
+        Readline::HISTORY.[]=(1, "second test").should == "second test"
       end
 
       it "raises an IndexError when there is no item at the passed positive index" do
