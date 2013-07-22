@@ -1037,7 +1037,7 @@ describe "Operator assignment 'obj[arg] op= expr'" do
     # TODO - Make the op (currently just testing '+') a parameter or
     # variable to test all the rest of the op= operator cases
 
-    context "splat arguments" do
+    describe "splat arguments" do
       it "handles empty splats" do
         @args = []
         (@obj[*@args] += @expr).should == @result
